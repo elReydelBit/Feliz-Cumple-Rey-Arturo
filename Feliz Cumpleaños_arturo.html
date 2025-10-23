@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensaje para el Rey Arturo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 20px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 30px;
+            border: 2px solid #00ff00;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00ff00;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #message-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+            opacity: 0;
+            transition: opacity 2s;
+        }
+
+        #message-container.show {
+            opacity: 1;
+        }
+
+        .title {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .message {
+            font-size: 18px;
+            line-height: 1.8;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .signature {
+            font-size: 20px;
+            margin-top: 30px;
+            color: #ffff00;
+            text-align: right;
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .easter-egg {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            z-index: 100;
+            transition: color 0.3s;
+        }
+
+        .easter-egg:hover {
+            color: #00ff00;
+        }
+
+        #excalibur-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 3px solid gold;
+            border-radius: 15px;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 50px gold;
+        }
+
+        #excalibur-modal.show {
+            display: block;
+            animation: swordPulse 2s infinite;
+        }
+
+        @keyframes swordPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        .sword {
+            font-size: 80px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loading-text">
+            >> INICIALIZANDO SISTEMA...<br>
+            >> CARGANDO MÓDULOS: Python, Django, Bootstrap<br>
+            >> ESTABLECIENDO CONEXIÓN CON LA MESA REDONDA...<br>
+            >> DETECTANDO NIVEL DE AMISTAD: MÁXIMO<br>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div id="message-container">
+        <div class="title">🏰 Para el Rey Arturo, Maestro de Python 🐍</div>
+        <div class="message" id="typed-message"></div>
+        <div class="signature">— Belibung (Fran) 🎯</div>
+    </div>
+
+    <div class="easter-egg" onclick="showExcalibur()">
+        ⚔️ Click aquí si eres digno
+    </div>
+
+    <div id="excalibur-modal">
+        <div class="sword">⚔️</div>
+        <div style="font-size: 24px; color: gold; margin: 20px;">
+            EXCALIBUR DETECTADA<br>
+            <span style="font-size: 16px; color: #fff; margin-top: 10px; display: block;">
+                (Tranquilo, no hace falta que la portes en mi presencia 😂)
+            </span>
+        </div>
+        <button onclick="hideExcalibur()" style="margin-top: 20px; padding: 10px 20px; background: gold; border: none; border-radius: 5px; cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold;">
+            Cerrar la leyenda
+        </button>
+    </div>
+
+    <script>
+        // Mensaje completo
+        const fullMessage = `Compi, colega, hermano de código...
+
+Han pasado batallas épicas: Onets que nos enseñaron, jefes que nos engañaron, enfrentamientos que nos hicieron más fuertes. Pero lo mejor de todo es que salimos de ahí siendo mejores amigos.
+
+Me has enseñado a usar la IA sin miedo, a confiar en la tecnología y a dejar de hacer todo a mano como un dinosaurio. Esas noches hablando de Python, Django y ciberseguridad son de lo mejor que me llevo.
+
+Ahora que estás en Almería, me encantaría que pudiéramos:
+
+✨ Emprender juntos con clientes SERIOS de verdad
+🌍 Viajar juntos otra vez (y esta vez de ocio, no por curro)
+🚀 Sacar algo juntos al mercado
+⚖️ Limitar tu carga al 50% (nada de noches en vela con desarrollo XP extremo)
+🎉 Volver a las Canarias y disfrutar de las noches como antes
+
+Echo de menos esas conversaciones hasta las tantas. Me gustaría seguir en tu Mesa Redonda, aunque ya sabes... sin necesidad de que Excalibur haga acto de presencia 😂
+
+Aquí tienes a Belibung, listo para la próxima aventura.
+
+¡Por muchas líneas de código juntos, maestro! 🐍👑`;
+
+        // Sistema de partículas
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const codeSnippets = [
+            'def amistad():', 'import django', 'bootstrap.init()',
+            'from rey_arturo import maestria', 'class Excalibur():', 
+            'print("Belibung")', 'async def emprender():', 'return exito',
+            'if amigo:', '    compartir()', 'python = vida', 'while True:',
+            'django.ORM', 'bootstrap.grid', 'try: except:', 'lambda x: x**2'
+        ];
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * 1000;
+                this.text = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                this.speed = Math.random() * 2 + 1;
+            }
+
+            update() {
+                this.z -= this.speed;
+                if (this.z <= 0) {
+                    this.z = 1000;
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.text = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                }
+            }
+
+            draw() {
+                const scale = 1000 / this.z;
+                const x2d = (this.x - canvas.width / 2) * scale + canvas.width / 2;
+                const y2d = (this.y - canvas.height / 2) * scale + canvas.height / 2;
+                const size = scale * 10;
+                const opacity = (1000 - this.z) / 1000;
+
+                ctx.fillStyle = `rgba(0, 255, 0, ${opacity * 0.8})`;
+                ctx.font = `${size}px Courier New`;
+                ctx.fillText(this.text, x2d, y2d);
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Barra de progreso
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 5;
+            document.getElementById('progress').style.width = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(progressInterval);
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('message-container').classList.add('show');
+                    typeMessage();
+                }, 500);
+            }
+        }, 100);
+
+        // Efecto typing
+        let charIndex = 0;
+        function typeMessage() {
+            if (charIndex < fullMessage.length) {
+                const currentText = fullMessage.substring(0, charIndex + 1);
+                document.getElementById('typed-message').innerHTML = 
+                    currentText.replace(/\n/g, '<br>') + '<span class="cursor">_</span>';
+                charIndex++;
+                setTimeout(typeMessage, 30);
+            } else {
+                document.getElementById('typed-message').innerHTML = 
+                    fullMessage.replace(/\n/g, '<br>');
+            }
+        }
+
+        // Easter egg
+        function showExcalibur() {
+            document.getElementById('excalibur-modal').classList.add('show');
+        }
+
+        function hideExcalibur() {
+            document.getElementById('excalibur-modal').classList.remove('show');
+        }
+
+        // Iniciar animación
+        animate();
+
+        // Redimensionar canvas
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
